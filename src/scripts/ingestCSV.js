@@ -20,11 +20,11 @@ async function ingestSampleData() {
       await createSampleCSVFiles(sampleDir);
     }
 
-    // IMPORTANT: ingest files in correct dependency order
+
     const files = [
-      { type: 'store_timezones', file: 'store_timezones.csv' },          // Parent first
+      { type: 'store_timezones', file: 'store_timezones.csv' },         
       { type: 'store_business_hours', file: 'store_business_hours.csv' },
-      { type: 'store_status', file: 'store_status.csv' }                 // Child last
+      { type: 'store_status', file: 'store_status.csv' }                 
     ];
 
     for (const { type, file } of files) {
@@ -51,7 +51,7 @@ async function ingestSampleData() {
 async function createSampleCSVFiles(sampleDir) {
   fs.mkdirSync(sampleDir, { recursive: true });
 
-  // Create sample timezone data FIRST
+  
   const timezonesCSV = `store_id,timezone_str
 store_001,America/New_York
 store_002,America/Los_Angeles

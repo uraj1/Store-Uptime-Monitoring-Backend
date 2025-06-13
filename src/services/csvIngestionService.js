@@ -82,7 +82,6 @@ class CSVIngestionService {
       case 'store_timezones':
         await StoreTimezone.destroy({ where: {} });
         await StoreTimezone.bulkCreate(validRecords, {
-          ignoreDuplicates: true,
           updateOnDuplicate: ['timezone_str']
         });
         break;
