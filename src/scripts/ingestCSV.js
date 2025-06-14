@@ -9,34 +9,43 @@ async function ingestSampleData() {
     await sequelize.authenticate();
     console.log('Database connection established.');
 
-    // Sync models (clean database first)
+    // Sync models
     await sequelize.sync({ force: true });
     console.log('Database models synchronized.');
 
     const sampleDir = path.join(__dirname, '../../sample-data');
     
-    if (!fs.existsSync(sampleDir)) {
-      console.log('Sample data directory not found. Creating sample CSV files...');
-      await createSampleCSVFiles(sampleDir);
-    }
+    // Ensure sample directory exists
+    fs.mkdirSync(sampleDir, { recursive: true });
 
-
+    // Check for missing files
     const files = [
-      { type: 'store_timezones', file: 'store_timezones.csv' },         
-      { type: 'store_business_hours', file: 'store_business_hours.csv' },
-      { type: 'store_status', file: 'store_status.csv' }                 
+      'store_timezones.csv',
+      'store_business_hours.csv',
+      'store_status.csv'
     ];
 
-    for (const { type, file } of files) {
+    const missingFiles = files.filter(file => !fs.existsSync(path.join(sampleDir, file)));
+
+    if (missingFiles.length > 0) {
+      console.log('Missing some sample CSV files. Generating sample files...');
+      await createSampleCSVFiles(sampleDir);
+    } else {
+      console.log('All sample CSV files found. Skipping generation.');
+    }
+
+    // Ingest data in correct foreign key dependency order
+    const ingestionOrder = [
+      { type: 'store_timezones', file: 'store_timezones.csv' },
+      { type: 'store_business_hours', file: 'store_business_hours.csv' },
+      { type: 'store_status', file: 'store_status.csv' }
+    ];
+
+    for (const { type, file } of ingestionOrder) {
       const filePath = path.join(sampleDir, file);
-      
-      if (fs.existsSync(filePath)) {
-        console.log(`Ingesting ${file}...`);
-        const count = await csvIngestionService.ingestCSV(type, filePath);
-        console.log(`✓ Imported ${count} records from ${file}`);
-      } else {
-        console.log(`⚠ File ${file} not found, skipping...`);
-      }
+      console.log(`Ingesting ${file}...`);
+      const count = await csvIngestionService.ingestCSV(type, filePath);
+      console.log(`✓ Imported ${count} records from ${file}`);
     }
 
     console.log('✅ CSV ingestion completed successfully!');
@@ -49,15 +58,12 @@ async function ingestSampleData() {
 }
 
 async function createSampleCSVFiles(sampleDir) {
-  fs.mkdirSync(sampleDir, { recursive: true });
-
-  
+  // Generate sample data
   const timezonesCSV = `store_id,timezone_str
 store_001,America/New_York
 store_002,America/Los_Angeles
 store_003,America/Chicago`;
 
-  // Create sample business hours data
   const businessHoursCSV = `store_id,dayOfWeek,start_time_local,end_time_local
 store_001,0,09:00:00,21:00:00
 store_001,1,09:00:00,21:00:00
@@ -74,7 +80,6 @@ store_002,4,08:00:00,20:00:00
 store_002,5,08:00:00,21:00:00
 store_002,6,09:00:00,21:00:00`;
 
-  // Create sample store status data LAST
   const storeStatusCSV = `store_id,timestamp_utc,status
 store_001,2023-01-25 12:00:00,active
 store_001,2023-01-25 13:00:00,inactive
@@ -87,7 +92,7 @@ store_003,2023-01-25 11:00:00,active
 store_003,2023-01-25 12:30:00,active
 store_003,2023-01-25 16:00:00,inactive`;
 
-  // Write files
+  // Write CSV files
   fs.writeFileSync(path.join(sampleDir, 'store_timezones.csv'), timezonesCSV);
   fs.writeFileSync(path.join(sampleDir, 'store_business_hours.csv'), businessHoursCSV);
   fs.writeFileSync(path.join(sampleDir, 'store_status.csv'), storeStatusCSV);
