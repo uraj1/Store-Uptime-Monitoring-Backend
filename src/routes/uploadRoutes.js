@@ -36,4 +36,8 @@ router.post('/csv', upload.fields([
   { name: 'store_timezones', maxCount: 1 }
 ]), uploadController.uploadCSV);
 
+router.get('/ping', (req, res) => {
+  res.json({ message: 'Upload route working ✅' });
+});
+
 module.exports = router;

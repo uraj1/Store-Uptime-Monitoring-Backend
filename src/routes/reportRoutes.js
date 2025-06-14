@@ -10,4 +10,9 @@ router.post('/trigger_report', reportController.triggerReport);
 // Get report status and download link
 router.get('/get_report/:report_id', validateReportId, reportController.getReport);
 
+router.get('/ping/report', (req, res) => {
+  res.json({ message: "Report routes are working ✅" });
+});
+
+
 module.exports = router;
